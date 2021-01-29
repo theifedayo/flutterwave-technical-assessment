@@ -17,15 +17,3 @@ app.listen(PORT, ()=>{
 	console.log(`Server running on port ${PORT}...`);
 })
 
-
-// const jsonData = {
-// 	'djdsj': 'dsndns'
-// }
-
-// //check for length of json objects
-// const abc = Object.entries(jsonData).length
-// console.log(abc)
-
-
-// //check for an object
-// console.log(typeof jsonData === 'object')
