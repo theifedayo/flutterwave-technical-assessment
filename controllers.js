@@ -85,7 +85,7 @@ exports.postRule = (req, res)=>{
 					validation: {
 						error: false,
 						field: req.body.rule.field,
-						field_value: "a", //nested objects
+						field_value: checkStringsAndArrays(req.body.data, req.body.rule.field) || checkNested(req.body.data, req.body.rule.field), //nested objects
 						condition: req.body.rule.condition,
 						condition_value: req.body.rule.condition_value
 					}
@@ -98,7 +98,7 @@ exports.postRule = (req, res)=>{
 				validation: {
 					error: true,
 					field: req.body.rule.field,
-					field_value: "a",//nested objects
+					field_value: checkStringsAndArrays(req.body.data, req.body.rule.field) || checkNested(req.body.data, req.body.rule.field),//nested objects
 					condition: req.body.rule.condition,
 					condition_value: req.body.rule.condition_value
 				}
@@ -129,12 +129,24 @@ function checkRuleObject(data1, data2){
 	*/
 	//data1 => req.body.rule.field, data2 => req.body.data
 
+	
+	if (Number.isInteger(parseInt(data1)) != true && (typeof(data1) != "undefined" )){
+		var a = checkNested(data2, data1)
+		try{
+			fieldValueLength = a.toString().length
+		}catch(TypeError){
+			return false
+		}
+		
+	}
+	
+	
 	if(Object.keys(data2).includes(data1) 
 		|| (parseInt(data1) < data2.length) 
 		|| (Number.isInteger(parseInt(data1)) && (Array.isArray(data2) || typeof(data2)=="string")
 			)
 
-		//|| check for nested objects
+		 || fieldValueLength > 0
 		){
 		if(parseInt(data1) > data2.length) return false
 		return true;
@@ -147,8 +159,10 @@ function checkRuleObject(data1, data2){
 
 function ruleFieldConditions(data1, data2){
 	var index = parseInt(data1.field) - 1;
+	console.log('ffffff')
 	if(Number.isInteger(parseInt(data1.field)) && (Array.isArray(data2) || typeof(data2)=="string")){
 		if(data1.condition == "eq"){
+			console.log(data2.length)
 			if(parseInt(data1.field) <= data2.length && data2[index] == data1.condition_value) return true;
 		}else if(data1.condition == "neq"){
 			if(data2[index] != data1.condition_value) return true;
@@ -164,24 +178,51 @@ function ruleFieldConditions(data1, data2){
 			
 		}
 	}else if(typeof(data1.field)=="string"){
+		const ruleField = data1.field; 
 		if(data1.condition == "eq"){
-			const ruleField = data1.field; 
-			console.log(ruleField)
-		//TODO: solve hard-coded missions.count here
-			if(data2.missions.count && data2.missions.count == data1.condition_value) return true
+			if(checkNested(data2, ruleField) && checkNested(data2, ruleField) == data1.condition_value) return true
+			console.log("falseifyx")
+			
 		}else if(data1.condition == "neq"){
-			if(data2.missions.count != data1.condition_value) return true
+			if(checkNested(data2, ruleField) != data1.condition_value) return true
 		}else if(data1.condition == "gt"){
-			if(data2.missions.count > data1.condition_value) return true
+			if(checkNested(data2, ruleField) > data1.condition_value) return true
 		}else if(data1.condition == "gte"){
-			if(data2.missions.count >= data1.condition_value) return true
+			if(checkNested(data2, ruleField) >= data1.condition_value) return true
 		}else if(data1.condition == "contains"){
-			if((data2.missions.count).includes(data1.condition_value)) return true
+			if((checkNested(data2, ruleField)).includes(data1.condition_value)) return true
 		}
 	}
 	return false
 }
 
+
+
+function checkNested(obj, a) {
+  // a = "missions.count" //rule.field
+  b = a.indexOf(".")
+  if(b){
+    c = a.slice(0, b)
+    
+    d = a.slice(b +1, a.length)  
+  }
+  
+  if (a in obj){
+    return obj[a]
+  }else if(d in obj[c]){
+   
+    return (obj[c][d])
+
+  }
+}
+
+function checkStringsAndArrays(obj, a){
+  console.log(typeof(a))
+  if(Number.isInteger(parseInt(a)) == true){
+    return obj[a - 1]
+  }
+
+}
 
 
 
